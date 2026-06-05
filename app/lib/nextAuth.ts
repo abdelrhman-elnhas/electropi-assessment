@@ -20,9 +20,7 @@ export const authOptions: AuthOptions = {
                         "https://api.escuelajs.co/api/v1/auth/login",
                         {
                             method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 email: credentials.email,
                                 password: credentials.password,
@@ -30,10 +28,18 @@ export const authOptions: AuthOptions = {
                         }
                     );
 
-                    const loginData = await loginRes.json();
+                    const loginText = await loginRes.text();
+                    let loginData;
+
+                    try {
+                        loginData = JSON.parse(loginText);
+                    } catch {
+                        throw new Error("Invalid login response from server");
+                    }
 
                     if (!loginRes.ok) {
-                        throw new Error("Invalid login credentials");
+                        console.log("LOGIN FAILED:", loginData);
+                        throw new Error(loginData?.message || "Login failed");
                     }
 
                     const profileRes = await fetch(
@@ -45,10 +51,18 @@ export const authOptions: AuthOptions = {
                         }
                     );
 
-                    const profileData = await profileRes.json();
+                    const profileText = await profileRes.text();
+                    let profileData;
+
+                    try {
+                        profileData = JSON.parse(profileText);
+                    } catch {
+                        throw new Error("Invalid profile response");
+                    }
 
                     if (!profileRes.ok) {
-                        throw new Error("Failed to fetch profile");
+                        console.log("PROFILE FAILED:", profileData);
+                        throw new Error(profileData?.message || "Profile failed");
                     }
 
                     return {
@@ -62,7 +76,7 @@ export const authOptions: AuthOptions = {
                     console.error("AUTH ERROR:", error);
                     throw error;
                 }
-            },
+            }
         }),
     ],
 
