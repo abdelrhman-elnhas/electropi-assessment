@@ -12,9 +12,13 @@ export const authOptions: AuthOptions = {
 
             async authorize(credentials) {
                 if (!credentials?.email || !credentials?.password) {
-                    return null;
+                    throw new Error("Missing email or password");
                 }
+
                 try {
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 8000);
+
                     const loginRes = await fetch(
                         "https://api.escuelajs.co/api/v1/auth/login",
                         {
@@ -24,12 +28,20 @@ export const authOptions: AuthOptions = {
                                 email: credentials.email,
                                 password: credentials.password,
                             }),
+                            signal: controller.signal,
                         }
                     );
 
-                    if (!loginRes.ok) return null;
+                    clearTimeout(timeout);
 
-                    const tokens = await loginRes.json();
+                    const loginData = await loginRes.json().catch(() => null);
+
+                    if (!loginRes.ok) {
+                        console.log("LOGIN FAILED:", loginData);
+                        throw new Error("Invalid login credentials");
+                    }
+
+                    const tokens = loginData;
 
                     const profileRes = await fetch(
                         "https://api.escuelajs.co/api/v1/auth/profile",
@@ -40,38 +52,47 @@ export const authOptions: AuthOptions = {
                         }
                     );
 
-                    if (!profileRes.ok) return null;
+                    const profileData = await profileRes.json().catch(() => null);
 
-                    const user = await profileRes.json();
+                    if (!profileRes.ok) {
+                        console.log("PROFILE FAILED:", profileData);
+                        throw new Error("Failed to fetch user profile");
+                    }
 
                     return {
-                        id: user.id,
-                        email: user.email,
-                        name: user.name,
-                        image: user.avatar,
+                        id: profileData.id,
+                        email: profileData.email,
+                        name: profileData.name,
+                        image: profileData.avatar,
                         apiAccessToken: tokens.access_token,
                     };
-                } catch (error) {
-                    console.error("Authorize error:", error);
-                    return null;
+                } catch (error: unknown) {
+                    if (error instanceof Error) {
+                        console.error("AUTHORIZE ERROR:", error.message);
+                        throw new Error(error.message);
+                    }
+
+                    console.error("AUTHORIZE ERROR:", error);
+                    throw new Error("Authentication failed");
                 }
-            }
-        })
+            },
+        }),
     ],
+
     session: {
         strategy: "jwt",
         maxAge: 1 * 24 * 60 * 60,
     },
 
     secret: process.env.NEXTAUTH_SECRET,
+
     pages: {
         signIn: "/auth/login",
         newUser: "/auth/register",
     },
 
     callbacks: {
-        async jwt({ token, user, account, session, trigger }) {
-
+        async jwt({ token, user, trigger, session }) {
             if (user) {
                 token.userId = user.id;
                 token.name = user.name;
@@ -87,8 +108,8 @@ export const authOptions: AuthOptions = {
             }
 
             return token;
-
         },
+
         async session({ session, token }) {
             session.user.id = token.userId;
             session.apiAccessToken = token.apiAccessToken;
@@ -98,5 +119,5 @@ export const authOptions: AuthOptions = {
         async redirect({ baseUrl }) {
             return `${baseUrl}/`;
         },
-    }
+    },
 };
