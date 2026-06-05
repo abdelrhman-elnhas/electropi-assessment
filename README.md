@@ -3,7 +3,7 @@
   <p align="center">
     A modern, full-featured e-commerce web application built as an assessment project for <strong>ElectroPi</strong>.
     <br />
-    <a href="#-live-demo"><strong>View Live Demo »</strong></a>
+    <a href="https://electropi-assessment.vercel.app"><strong>View Live Demo »</strong></a>
   </p>
 </p>
 
@@ -95,7 +95,7 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [https://electropi-assessment.vercel.app](https://electropi-assessment.vercel.app) in your browser.
 
 ### 5. Build for production (optional)
 
@@ -209,7 +209,7 @@ electropi-assessment/
 
 <!-- > 🚧 _Coming soon — deployment link will be added here._ -->
 
- [Live Demo](https://your-deployment-url.vercel.app)
+ [Live Demo](https://electropi-assessment.vercel.app)
 
 ---
 
