@@ -11,70 +11,60 @@ export const authOptions: AuthOptions = {
             },
 
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
-                    throw new Error("Missing credentials");
-                }
-
                 try {
+                    console.log("LOGIN STEP START");
+
                     const loginRes = await fetch(
                         "https://api.escuelajs.co/api/v1/auth/login",
                         {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                email: credentials.email,
-                                password: credentials.password,
+                                email: credentials?.email,
+                                password: credentials?.password,
                             }),
                         }
                     );
 
                     const loginText = await loginRes.text();
-                    let loginData;
-
-                    try {
-                        loginData = JSON.parse(loginText);
-                    } catch {
-                        throw new Error("Invalid login response from server");
-                    }
+                    console.log("LOGIN RAW RESPONSE:", loginText);
 
                     if (!loginRes.ok) {
-                        console.log("LOGIN FAILED:", loginData);
-                        throw new Error(loginData?.message || "Login failed");
+                        throw new Error(`LOGIN FAILED: ${loginText}`);
                     }
+
+                    const tokens = JSON.parse(loginText);
+
+                    console.log("TOKEN:", tokens);
 
                     const profileRes = await fetch(
                         "https://api.escuelajs.co/api/v1/auth/profile",
                         {
                             headers: {
-                                Authorization: `Bearer ${loginData.access_token}`,
+                                Authorization: `Bearer ${tokens.access_token}`,
                             },
                         }
                     );
 
                     const profileText = await profileRes.text();
-                    let profileData;
-
-                    try {
-                        profileData = JSON.parse(profileText);
-                    } catch {
-                        throw new Error("Invalid profile response");
-                    }
+                    console.log("PROFILE RAW:", profileText);
 
                     if (!profileRes.ok) {
-                        console.log("PROFILE FAILED:", profileData);
-                        throw new Error(profileData?.message || "Profile failed");
+                        throw new Error(`PROFILE FAILED: ${profileText}`);
                     }
 
+                    const user = JSON.parse(profileText);
+
                     return {
-                        id: profileData.id,
-                        email: profileData.email,
-                        name: profileData.name,
-                        image: profileData.avatar,
-                        apiAccessToken: loginData.access_token,
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        image: user.avatar,
+                        apiAccessToken: tokens.access_token,
                     };
-                } catch (error) {
-                    console.error("AUTH ERROR:", error);
-                    throw error;
+                } catch (err) {
+                    console.error("AUTHORIZE ERROR:", err);
+                    throw err;
                 }
             }
         }),
