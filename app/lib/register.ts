@@ -17,6 +17,10 @@ export async function registerUser(data: {
     });
 
     const result = await res.json();
+    console.log({
+        email: data.email,
+        password: data.password,
+    });
 
     if (!res.ok) {
         throw new Error(result?.message || "Registration failed");
